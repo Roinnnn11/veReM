@@ -1,0 +1,12 @@
+model: GSAI-ML/LLaDA-8B-Instruct
+method: verem
+num_samples: 200
+steps: 64
+max_new_tokens: 512
+infill_steps: 32
+max_revision_rounds: 1
+max_spans_per_example: 3
+samples_per_span: 2
+temperature: 0.0
+seed: 42
+split: test
