@@ -29,6 +29,8 @@ from ..decoding.vanilla import VanillaDecoder
 from ..decoding.random_remask import RandomRemaskDecoder
 from ..decoding.heuristic_remask import HeuristicRemaskDecoder
 from ..decoding.verifier_remask import VeReMDecoder
+from ..decoding.self_consistency import SelfConsistencyDecoder
+from ..decoding.verifier_rerank import VerifierRerankDecoder
 from ..utils.io import append_jsonl, write_jsonl
 from ..utils.seeds import set_seed
 
@@ -40,6 +42,7 @@ def build_decoder(method: str, model, verifier, args):
         max_new_tokens=args.max_new_tokens,
         steps=args.steps,
         temperature=args.temperature,
+        block_length=args.block_length,
     )
     remask_common = dict(
         **common,
@@ -55,7 +58,25 @@ def build_decoder(method: str, model, verifier, args):
     elif method == "heuristic_remask":
         return HeuristicRemaskDecoder(**remask_common)
     elif method == "verem":
-        return VeReMDecoder(**remask_common)
+        return VeReMDecoder(**remask_common, infill_temperature=args.infill_temperature)
+    elif method == "self_consistency":
+        return SelfConsistencyDecoder(
+            model=model, verifier=verifier,
+            max_new_tokens=args.max_new_tokens,
+            steps=args.steps,
+            temperature=args.sc_temperature,
+            block_length=args.block_length,
+            num_samples=args.sc_samples,
+        )
+    elif method == "verifier_rerank":
+        return VerifierRerankDecoder(
+            model=model, verifier=verifier,
+            max_new_tokens=args.max_new_tokens,
+            steps=args.steps,
+            temperature=args.sc_temperature,
+            block_length=args.block_length,
+            num_candidates=args.sc_samples,
+        )
     else:
         raise ValueError(f"Unknown method: {method}")
 
@@ -101,19 +122,26 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", default="GSAI-ML/LLaDA-8B-Instruct")
     parser.add_argument("--method", default="verem",
-                        choices=["vanilla", "random_remask", "heuristic_remask", "verem"])
+                        choices=["vanilla", "random_remask", "heuristic_remask", "verem",
+                                 "self_consistency", "verifier_rerank"])
     parser.add_argument("--num_samples", type=int, default=200)
-    parser.add_argument("--steps", type=int, default=64)
-    parser.add_argument("--max_new_tokens", type=int, default=512)
-    parser.add_argument("--infill_steps", type=int, default=32)
+    parser.add_argument("--steps", type=int, default=256)
+    parser.add_argument("--max_new_tokens", type=int, default=256)
+    parser.add_argument("--block_length", type=int, default=32)
+    parser.add_argument("--infill_steps", type=int, default=128)
     parser.add_argument("--max_revision_rounds", type=int, default=1)
     parser.add_argument("--max_spans_per_example", type=int, default=3)
     parser.add_argument("--samples_per_span", type=int, default=2)
     parser.add_argument("--temperature", type=float, default=0.0)
+    parser.add_argument("--infill_temperature", type=float, default=0.5)
+    parser.add_argument("--sc_temperature", type=float, default=0.5)
+    parser.add_argument("--sc_samples", type=int, default=5)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--split", default="test")
     parser.add_argument("--output", required=True)
     parser.add_argument("--device", default="auto")
+    parser.add_argument("--resume", action="store_true",
+                        help="Skip examples already in output file")
     args = parser.parse_args()
 
     set_seed(args.seed)
@@ -128,9 +156,22 @@ def main():
 
     os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
 
+    # Load already-completed ids when resuming
+    done_ids = set()
+    if args.resume and os.path.exists(args.output):
+        with open(args.output) as f:
+            for line in f:
+                try:
+                    done_ids.add(json.loads(line)["id"])
+                except Exception:
+                    pass
+        print(f"Resuming: {len(done_ids)} examples already done, skipping.")
+
     records = []
     t_start = time.time()
     for ex in tqdm(examples, desc=f"[{args.method}]"):
+        if ex["id"] in done_ids:
+            continue
         result = decoder.decode(ex)
         result["steps_baseline"] = args.steps
         records.append(result)
@@ -139,11 +180,20 @@ def main():
     total_time = time.time() - t_start
     print(f"\nDone in {total_time:.1f}s. Output: {args.output}")
 
+    # Re-read all records from file (includes previously completed ones when resuming)
+    all_records = []
+    with open(args.output) as f:
+        for line in f:
+            try:
+                all_records.append(json.loads(line))
+            except Exception:
+                pass
+
     # Compute and save metrics
     metrics = {
         "method": args.method,
         "model": args.model_name,
-        "num_samples": len(records),
+        "num_samples": len(all_records),
         "steps": args.steps,
         "infill_steps": args.infill_steps,
         "max_spans_per_example": args.max_spans_per_example,
@@ -152,12 +202,12 @@ def main():
         "total_time": total_time,
     }
 
-    n = len(records)
-    initial_correct = sum(r["initial_correct"] for r in records)
-    final_correct = sum(r["final_correct"] for r in records)
-    initially_wrong = [r for r in records if not r["initial_correct"]]
+    n = len(all_records)
+    initial_correct = sum(r["initial_correct"] for r in all_records)
+    final_correct = sum(r["final_correct"] for r in all_records)
+    initially_wrong = [r for r in all_records if not r["initial_correct"]]
     fixed = [r for r in initially_wrong if r["final_correct"]]
-    latencies = sorted(r["latency"] for r in records)
+    latencies = sorted(r["latency"] for r in all_records)
 
     metrics.update({
         "initial_accuracy": initial_correct / n,
@@ -165,8 +215,8 @@ def main():
         "fix_rate": len(fixed) / len(initially_wrong) if initially_wrong else 0.0,
         "initially_wrong": len(initially_wrong),
         "fixed": len(fixed),
-        "avg_model_forwards": sum(r["num_model_forwards"] for r in records) / n,
-        "avg_verifier_calls": sum(r["num_verifier_calls"] for r in records) / n,
+        "avg_model_forwards": sum(r["num_model_forwards"] for r in all_records) / n,
+        "avg_verifier_calls": sum(r["num_verifier_calls"] for r in all_records) / n,
         "avg_latency": sum(latencies) / n,
         "p50_latency": latencies[int(n * 0.5)],
         "p95_latency": latencies[int(n * 0.95)],

@@ -11,10 +11,11 @@ class RandomRemaskDecoder(BaseDecoder):
         self,
         model,
         verifier,
-        max_new_tokens=512,
-        steps=64,
-        infill_steps=32,
+        max_new_tokens=256,
+        steps=256,
+        infill_steps=128,
         temperature=0.0,
+        block_length=32,
         max_revision_rounds=1,
         max_spans_per_example=3,
         samples_per_span=1,
@@ -26,10 +27,12 @@ class RandomRemaskDecoder(BaseDecoder):
         self.steps = steps
         self.infill_steps = infill_steps
         self.temperature = temperature
+        self.block_length = block_length
         self.max_revision_rounds = max_revision_rounds
         self.max_spans_per_example = max_spans_per_example
         self.samples_per_span = samples_per_span
         self.rng = random.Random(seed)
+        self.tokenizer = getattr(model, 'tokenizer', None)
 
     def decode(self, example: dict) -> dict:
         t0 = time.time()
@@ -40,6 +43,7 @@ class RandomRemaskDecoder(BaseDecoder):
             max_new_tokens=self.max_new_tokens,
             steps=self.steps,
             temperature=self.temperature,
+            block_length=self.block_length,
         )
         initial_output = init_result["text"]
         initial_correct = self.verifier(initial_output, example["gold"])
@@ -62,7 +66,7 @@ class RandomRemaskDecoder(BaseDecoder):
 
                 for span in selected:
                     for _ in range(self.samples_per_span):
-                        masked = mask_span(initial_output, span)
+                        masked = mask_span(initial_output, span, tokenizer=self.tokenizer)
                         infill_result = self.model.infill(
                             prompt=example["prompt"],
                             text_with_masks=masked,

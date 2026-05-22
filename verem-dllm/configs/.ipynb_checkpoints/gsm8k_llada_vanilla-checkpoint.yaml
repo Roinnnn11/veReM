@@ -1,0 +1,8 @@
+model: GSAI-ML/LLaDA-8B-Instruct
+method: vanilla
+num_samples: 200
+steps: 64
+max_new_tokens: 512
+temperature: 0.0
+seed: 42
+split: test

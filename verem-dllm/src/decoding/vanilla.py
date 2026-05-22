@@ -4,12 +4,13 @@ from .base import BaseDecoder
 
 
 class VanillaDecoder(BaseDecoder):
-    def __init__(self, model, verifier, max_new_tokens=512, steps=64, temperature=0.0):
+    def __init__(self, model, verifier, max_new_tokens=256, steps=256, temperature=0.0, block_length=32):
         self.model = model
         self.verifier = verifier
         self.max_new_tokens = max_new_tokens
         self.steps = steps
         self.temperature = temperature
+        self.block_length = block_length
 
     def decode(self, example: dict) -> dict:
         t0 = time.time()
@@ -18,6 +19,7 @@ class VanillaDecoder(BaseDecoder):
             max_new_tokens=self.max_new_tokens,
             steps=self.steps,
             temperature=self.temperature,
+            block_length=self.block_length,
         )
         latency = time.time() - t0
 

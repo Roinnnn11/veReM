@@ -4,25 +4,23 @@
 
 NUM=${1:-200}
 SEED=${2:-42}
-MODEL="${MODEL:-/root/autodl-fs/LLaDA-8B-Instruct}"
-STEPS=256
-INFILL_STEPS=128
-MAX_TOKENS=256
-BLOCK_LENGTH=32
+MODEL="/mnt/models/LLaDA-8B-Instruct"
+STEPS=64
+INFILL_STEPS=32
+MAX_TOKENS=512
 ROUNDS=1
 SPANS=3
 
 echo "=== VeReM GSM8K Experiment: N=${NUM}, seed=${SEED} ==="
 
-# python -m src.eval.run_gsm8k \
-#   --model_name $MODEL \
-#   --method vanilla \
-#   --num_samples $NUM \
-#   --steps $STEPS \
-#   --max_new_tokens $MAX_TOKENS \
-#   --block_length $BLOCK_LENGTH \
-#   --seed $SEED \
-#   --output outputs/generations/gsm8k_vanilla_${NUM}_s${STEPS}_seed${SEED}.jsonl
+python -m src.eval.run_gsm8k \
+  --model_name $MODEL \
+  --method vanilla \
+  --num_samples $NUM \
+  --steps $STEPS \
+  --max_new_tokens $MAX_TOKENS \
+  --seed $SEED \
+  --output outputs/generations/gsm8k_vanilla_${NUM}_s${STEPS}_seed${SEED}.jsonl
 
 python -m src.eval.run_gsm8k \
   --model_name $MODEL \
@@ -30,8 +28,6 @@ python -m src.eval.run_gsm8k \
   --num_samples $NUM \
   --steps $STEPS \
   --infill_steps $INFILL_STEPS \
-  --max_new_tokens $MAX_TOKENS \
-  --block_length $BLOCK_LENGTH \
   --max_revision_rounds $ROUNDS \
   --max_spans_per_example $SPANS \
   --samples_per_span 1 \
@@ -44,8 +40,6 @@ python -m src.eval.run_gsm8k \
   --num_samples $NUM \
   --steps $STEPS \
   --infill_steps $INFILL_STEPS \
-  --max_new_tokens $MAX_TOKENS \
-  --block_length $BLOCK_LENGTH \
   --max_revision_rounds $ROUNDS \
   --max_spans_per_example $SPANS \
   --samples_per_span 1 \
@@ -58,8 +52,6 @@ python -m src.eval.run_gsm8k \
   --num_samples $NUM \
   --steps $STEPS \
   --infill_steps $INFILL_STEPS \
-  --max_new_tokens $MAX_TOKENS \
-  --block_length $BLOCK_LENGTH \
   --max_revision_rounds $ROUNDS \
   --max_spans_per_example $SPANS \
   --samples_per_span 2 \
