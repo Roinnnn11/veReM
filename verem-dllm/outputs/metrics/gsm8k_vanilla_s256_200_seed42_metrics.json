@@ -1,0 +1,21 @@
+{
+  "method": "vanilla",
+  "model": "/root/autodl-fs/LLaDA-8B-Instruct",
+  "num_samples": 200,
+  "steps": 256,
+  "infill_steps": 128,
+  "max_spans_per_example": 3,
+  "samples_per_span": 2,
+  "seed": 42,
+  "total_time": 5275.767735481262,
+  "initial_accuracy": 0.64,
+  "final_accuracy": 0.64,
+  "fix_rate": 0.0,
+  "initially_wrong": 72,
+  "fixed": 0,
+  "avg_model_forwards": 256.0,
+  "avg_verifier_calls": 1.0,
+  "avg_latency": 26.34420268893242,
+  "p50_latency": 25.575955867767334,
+  "p95_latency": 31.0908465385437
+}

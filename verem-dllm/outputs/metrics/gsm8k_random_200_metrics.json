@@ -1,0 +1,21 @@
+{
+  "method": "random_remask",
+  "model": "/mnt/models/LLaDA-8B-Instruct",
+  "num_samples": 200,
+  "steps": 64,
+  "infill_steps": 32,
+  "max_spans_per_example": 3,
+  "samples_per_span": 1,
+  "seed": 42,
+  "total_time": 743.5437717437744,
+  "initial_accuracy": 0.175,
+  "final_accuracy": 0.205,
+  "fix_rate": 0.03636363636363636,
+  "initially_wrong": 165,
+  "fixed": 6,
+  "avg_model_forwards": 122.88,
+  "avg_verifier_calls": 2.84,
+  "avg_latency": 3.7173464381694794,
+  "p50_latency": 3.6343023777008057,
+  "p95_latency": 4.347198724746704
+}

@@ -1,0 +1,45 @@
+{
+  "input": "outputs/generations/gsm8k_selfeval_n5_200_seed0.jsonl",
+  "rows": [
+    {
+      "strategy": "first",
+      "n_examples": 43,
+      "n_candidates": 5,
+      "accuracy": 0.6976744186046512,
+      "initial_accuracy": 0.6976744186046512,
+      "pass_at_n": 0.9302325581395349
+    },
+    {
+      "strategy": "majority",
+      "n_examples": 43,
+      "n_candidates": 5,
+      "accuracy": 0.7674418604651163,
+      "initial_accuracy": 0.6976744186046512,
+      "pass_at_n": 0.9302325581395349
+    },
+    {
+      "strategy": "self_eval",
+      "n_examples": 43,
+      "n_candidates": 5,
+      "accuracy": 0.6511627906976745,
+      "initial_accuracy": 0.6976744186046512,
+      "pass_at_n": 0.9302325581395349
+    },
+    {
+      "strategy": "weighted_sc",
+      "n_examples": 43,
+      "n_candidates": 5,
+      "accuracy": 0.7674418604651163,
+      "initial_accuracy": 0.6976744186046512,
+      "pass_at_n": 0.9302325581395349
+    },
+    {
+      "strategy": "pass_at_n",
+      "n_examples": 43,
+      "n_candidates": 5,
+      "accuracy": 0.9302325581395349,
+      "initial_accuracy": 0.6976744186046512,
+      "pass_at_n": 0.9302325581395349
+    }
+  ]
+}

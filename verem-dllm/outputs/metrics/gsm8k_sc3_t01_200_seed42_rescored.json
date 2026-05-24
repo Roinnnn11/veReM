@@ -1,0 +1,61 @@
+{
+  "input": "outputs/generations/gsm8k_sc3_t01_200_seed42.jsonl",
+  "rows": [
+    {
+      "strategy": "first",
+      "n_examples": 200,
+      "n_candidates": 3,
+      "accuracy": 0.615,
+      "initial_accuracy": 0.615,
+      "pass_at_n": 0.865
+    },
+    {
+      "strategy": "oracle",
+      "n_examples": 200,
+      "n_candidates": 3,
+      "accuracy": 0.865,
+      "initial_accuracy": 0.615,
+      "pass_at_n": 0.865
+    },
+    {
+      "strategy": "majority",
+      "n_examples": 200,
+      "n_candidates": 3,
+      "accuracy": 0.685,
+      "initial_accuracy": 0.615,
+      "pass_at_n": 0.865
+    },
+    {
+      "strategy": "format",
+      "n_examples": 200,
+      "n_candidates": 3,
+      "accuracy": 0.64,
+      "initial_accuracy": 0.615,
+      "pass_at_n": 0.865
+    },
+    {
+      "strategy": "arithmetic",
+      "n_examples": 200,
+      "n_candidates": 3,
+      "accuracy": 0.62,
+      "initial_accuracy": 0.615,
+      "pass_at_n": 0.865
+    },
+    {
+      "strategy": "honest",
+      "n_examples": 200,
+      "n_candidates": 3,
+      "accuracy": 0.635,
+      "initial_accuracy": 0.615,
+      "pass_at_n": 0.865
+    },
+    {
+      "strategy": "pass_at_n",
+      "n_examples": 200,
+      "n_candidates": 3,
+      "accuracy": 0.865,
+      "initial_accuracy": 0.615,
+      "pass_at_n": 0.865
+    }
+  ]
+}

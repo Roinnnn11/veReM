@@ -1,0 +1,21 @@
+{
+  "method": "vanilla",
+  "model": "/mnt/models/LLaDA-8B-Instruct",
+  "num_samples": 200,
+  "steps": 64,
+  "infill_steps": 32,
+  "max_spans_per_example": 3,
+  "samples_per_span": 2,
+  "seed": 42,
+  "total_time": 732.2040829658508,
+  "initial_accuracy": 0.175,
+  "final_accuracy": 0.175,
+  "fix_rate": 0.0,
+  "initially_wrong": 165,
+  "fixed": 0,
+  "avg_model_forwards": 64.0,
+  "avg_verifier_calls": 1.0,
+  "avg_latency": 3.6606355583667756,
+  "p50_latency": 3.5834832191467285,
+  "p95_latency": 4.220974922180176
+}

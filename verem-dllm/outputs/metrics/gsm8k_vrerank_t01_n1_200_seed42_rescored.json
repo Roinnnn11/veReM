@@ -1,0 +1,61 @@
+{
+  "input": "outputs/generations/gsm8k_vrerank_t01_n1_200_seed42.jsonl",
+  "rows": [
+    {
+      "strategy": "first",
+      "n_examples": 200,
+      "n_candidates": 1,
+      "accuracy": 0.695,
+      "initial_accuracy": 0.695,
+      "pass_at_n": 0.695
+    },
+    {
+      "strategy": "oracle",
+      "n_examples": 200,
+      "n_candidates": 1,
+      "accuracy": 0.695,
+      "initial_accuracy": 0.695,
+      "pass_at_n": 0.695
+    },
+    {
+      "strategy": "majority",
+      "n_examples": 200,
+      "n_candidates": 1,
+      "accuracy": 0.695,
+      "initial_accuracy": 0.695,
+      "pass_at_n": 0.695
+    },
+    {
+      "strategy": "format",
+      "n_examples": 200,
+      "n_candidates": 1,
+      "accuracy": 0.695,
+      "initial_accuracy": 0.695,
+      "pass_at_n": 0.695
+    },
+    {
+      "strategy": "arithmetic",
+      "n_examples": 200,
+      "n_candidates": 1,
+      "accuracy": 0.695,
+      "initial_accuracy": 0.695,
+      "pass_at_n": 0.695
+    },
+    {
+      "strategy": "honest",
+      "n_examples": 200,
+      "n_candidates": 1,
+      "accuracy": 0.695,
+      "initial_accuracy": 0.695,
+      "pass_at_n": 0.695
+    },
+    {
+      "strategy": "pass_at_n",
+      "n_examples": 200,
+      "n_candidates": 1,
+      "accuracy": 0.695,
+      "initial_accuracy": 0.695,
+      "pass_at_n": 0.695
+    }
+  ]
+}

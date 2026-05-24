@@ -1,0 +1,36 @@
+========================================
+ VeReM GSM8K 实验 N=200 seed=42
+ 开始时间: Mon May 18 01:06:55 CST 2026
+========================================
+[跳过] vanilla 已有 200 条结果
+[2/4] random_remask ...
+Traceback (most recent call last):
+  File "/root/miniconda3/envs/verem/lib/python3.10/site-packages/transformers/utils/hub.py", line 402, in cached_file
+    resolved_file = hf_hub_download(
+  File "/root/miniconda3/envs/verem/lib/python3.10/site-packages/huggingface_hub/utils/_validators.py", line 106, in _inner_fn
+    validate_repo_id(arg_value)
+  File "/root/miniconda3/envs/verem/lib/python3.10/site-packages/huggingface_hub/utils/_validators.py", line 154, in validate_repo_id
+    raise HFValidationError(
+huggingface_hub.errors.HFValidationError: Repo id must be in the form 'repo_name' or 'namespace/repo_name': '${MODEL:-/root/autodl-fs/LLaDA-8B-Instruct}'. Use `repo_type` argument if needed.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/miniconda3/envs/verem/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/root/miniconda3/envs/verem/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/autodl-fs/data/veReM/verem-dllm/src/eval/run_gsm8k.py", line 197, in <module>
+    main()
+  File "/autodl-fs/data/veReM/verem-dllm/src/eval/run_gsm8k.py", line 124, in main
+    model = LLaDAWrapper(model_name=args.model_name, device=args.device)
+  File "/autodl-fs/data/veReM/verem-dllm/src/models/llada_wrapper.py", line 49, in __init__
+    self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+  File "/root/miniconda3/envs/verem/lib/python3.10/site-packages/transformers/models/auto/tokenization_auto.py", line 834, in from_pretrained
+    tokenizer_config = get_tokenizer_config(pretrained_model_name_or_path, **kwargs)
+  File "/root/miniconda3/envs/verem/lib/python3.10/site-packages/transformers/models/auto/tokenization_auto.py", line 666, in get_tokenizer_config
+    resolved_config_file = cached_file(
+  File "/root/miniconda3/envs/verem/lib/python3.10/site-packages/transformers/utils/hub.py", line 466, in cached_file
+    raise EnvironmentError(
+OSError: Incorrect path_or_model_id: '${MODEL:-/root/autodl-fs/LLaDA-8B-Instruct}'. Please provide either the path to a local folder or the repo_id of a model on the Hub.
+Loading model: ${MODEL:-/root/autodl-fs/LLaDA-8B-Instruct}

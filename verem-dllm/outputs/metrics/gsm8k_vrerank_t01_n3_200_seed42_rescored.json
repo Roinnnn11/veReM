@@ -1,0 +1,61 @@
+{
+  "input": "outputs/generations/gsm8k_vrerank_t01_n3_200_seed42.jsonl",
+  "rows": [
+    {
+      "strategy": "first",
+      "n_examples": 215,
+      "n_candidates": 3,
+      "accuracy": 0.6093023255813953,
+      "initial_accuracy": 0.6093023255813953,
+      "pass_at_n": 0.8186046511627907
+    },
+    {
+      "strategy": "oracle",
+      "n_examples": 215,
+      "n_candidates": 3,
+      "accuracy": 0.8186046511627907,
+      "initial_accuracy": 0.6093023255813953,
+      "pass_at_n": 0.8186046511627907
+    },
+    {
+      "strategy": "majority",
+      "n_examples": 215,
+      "n_candidates": 3,
+      "accuracy": 0.6930232558139535,
+      "initial_accuracy": 0.6093023255813953,
+      "pass_at_n": 0.8186046511627907
+    },
+    {
+      "strategy": "format",
+      "n_examples": 215,
+      "n_candidates": 3,
+      "accuracy": 0.6046511627906976,
+      "initial_accuracy": 0.6093023255813953,
+      "pass_at_n": 0.8186046511627907
+    },
+    {
+      "strategy": "arithmetic",
+      "n_examples": 215,
+      "n_candidates": 3,
+      "accuracy": 0.641860465116279,
+      "initial_accuracy": 0.6093023255813953,
+      "pass_at_n": 0.8186046511627907
+    },
+    {
+      "strategy": "honest",
+      "n_examples": 215,
+      "n_candidates": 3,
+      "accuracy": 0.641860465116279,
+      "initial_accuracy": 0.6093023255813953,
+      "pass_at_n": 0.8186046511627907
+    },
+    {
+      "strategy": "pass_at_n",
+      "n_examples": 215,
+      "n_candidates": 3,
+      "accuracy": 0.8186046511627907,
+      "initial_accuracy": 0.6093023255813953,
+      "pass_at_n": 0.8186046511627907
+    }
+  ]
+}
