@@ -31,6 +31,7 @@ from ..decoding.heuristic_remask import HeuristicRemaskDecoder
 from ..decoding.verifier_remask import VeReMDecoder
 from ..decoding.self_consistency import SelfConsistencyDecoder
 from ..decoding.verifier_rerank import VerifierRerankDecoder
+from ..decoding.self_eval_rerank import SelfEvalRerankDecoder
 from ..utils.io import append_jsonl, write_jsonl
 from ..utils.seeds import set_seed
 
@@ -70,6 +71,15 @@ def build_decoder(method: str, model, verifier, args):
         )
     elif method == "verifier_rerank":
         return VerifierRerankDecoder(
+            model=model, verifier=verifier,
+            max_new_tokens=args.max_new_tokens,
+            steps=args.steps,
+            temperature=args.sc_temperature,
+            block_length=args.block_length,
+            num_candidates=args.sc_samples,
+        )
+    elif method == "self_eval_rerank":
+        return SelfEvalRerankDecoder(
             model=model, verifier=verifier,
             max_new_tokens=args.max_new_tokens,
             steps=args.steps,
@@ -123,7 +133,7 @@ def main():
     parser.add_argument("--model_name", default="GSAI-ML/LLaDA-8B-Instruct")
     parser.add_argument("--method", default="verem",
                         choices=["vanilla", "random_remask", "heuristic_remask", "verem",
-                                 "self_consistency", "verifier_rerank"])
+                                 "self_consistency", "verifier_rerank", "self_eval_rerank"])
     parser.add_argument("--num_samples", type=int, default=200)
     parser.add_argument("--steps", type=int, default=256)
     parser.add_argument("--max_new_tokens", type=int, default=256)

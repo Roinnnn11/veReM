@@ -1,17 +1,22 @@
 import time
+from collections import Counter
 
 from .base import BaseDecoder
 from ..verifiers.gsm8k_verifier import extract_answer
-from collections import Counter
 
 
-class VerifierRerankDecoder(BaseDecoder):
-    """Generate N candidates with low temperature, verifier picks the best one.
+class OracleRerankDecoder(BaseDecoder):
+    """*** ORACLE / UPPER BOUND ***
 
-    Selection priority:
-    1. First candidate that passes the verifier (oracle upper bound)
-    2. Majority vote among extracted answers (no verifier signal)
-    3. First candidate (fallback)
+    Generates N candidates and picks the first one whose extracted answer
+    equals the gold answer. This is dishonest in the sense that selection
+    uses gold labels, so its accuracy is exactly Pass@N (the probability
+    that at least one candidate is correct).
+
+    Use ONLY for upper-bound analysis. The honest counterparts are:
+      - SelfConsistencyDecoder (majority vote)
+      - SelfEvalRerankDecoder (model judges its own candidates)
+      - The format/arithmetic offline rescorers in offline_rescore.py
     """
 
     def __init__(
@@ -49,14 +54,13 @@ class VerifierRerankDecoder(BaseDecoder):
         initial_output = candidates[0]
         initial_correct = self.verifier(initial_output, example["gold"])
 
-        # Verifier reranking: pick first passing candidate
+        # ORACLE: selection uses gold (this is Pass@N, not a real verifier)
         final_output = None
         for c in candidates:
             if self.verifier(c, example["gold"]):
                 final_output = c
                 break
 
-        # Fallback: majority vote
         if final_output is None:
             answers = [extract_answer(c) for c in candidates]
             valid = [a for a in answers if a is not None]
@@ -79,7 +83,7 @@ class VerifierRerankDecoder(BaseDecoder):
             "final_output": final_output,
             "initial_correct": initial_correct,
             "final_correct": final_correct,
-            "method": "verifier_rerank",
+            "method": "oracle_rerank",
             "latency": latency,
             "num_model_forwards": self.steps * self.num_candidates,
             "num_verifier_calls": self.num_candidates,
@@ -94,3 +98,7 @@ class VerifierRerankDecoder(BaseDecoder):
                 for i, c in enumerate(candidates)
             ],
         }
+
+
+# Backward-compat alias so existing run scripts keep working until renamed.
+VerifierRerankDecoder = OracleRerankDecoder

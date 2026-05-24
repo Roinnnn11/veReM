@@ -358,35 +358,85 @@ Go 条件：
 - [ ] 跑 verifier_rerank 200 条（seed=0, t=0.1, N=5）→ 进行中（60/200）
 - [ ] 跑 verifier_rerank 200 条（seed=1, t=0.1, N=5）→ 进行中（54/200）
 
-### 主表（GSM8K N=200, seed=42, LLaDA-8B-Instruct, steps=256）
+### 🚨 重大方法学修正（2026-05-22 晚）
 
-| Method | Initial Acc | Final Acc | Fix Rate | Avg Forwards | Avg Latency |
-|---|---:|---:|---:|---:|---:|
-| Vanilla (greedy) | 64.0% | 64.0% | - | 256 | 26.3s |
-| VeReM (span remask, 旧版) | 63.5% | 63.5% | 1.35% | 538 | 19.9s |
-| VRerank N=1 (t=0.1, sanity) | 69.5% | 69.5% | - | 256 | 32.2s |
-| Self-Consistency N=3 (t=0.1) | 61.5% | 68.5% | 19.5% | 768 | 97.7s |
-| **VRerank N=3 (t=0.1)** | 60.9%† | **81.9%** | **53.6%** | 768 | 60.2s |
-| Self-Consistency N=5 (t=0.1) | 57.0% | 75.5% | 47.7% | 1280 | 150.3s |
-| **VRerank N=5 (t=0.1)** | 65.5% | **92.5%** | **78.3%** | 1280 | 57.8s |
+**发现**：`verifier_rerank` decoder 中 `self.verifier(c, gold)` 实际是用 **gold answer** 选最优候选（即 `is_correct(c, gold)`），所以 92.5% / 81.9% 是 **oracle Pass@N**，不是真 verifier 结果。
 
-† VRerank N=3 跑了 215 样本（出 bug 多跑 15 个），其他都是 200。
+**修正**：
+- `VerifierRerankDecoder` 重命名为 `OracleRerankDecoder`，标记为上界
+- 实现 `SelfEvalRerankDecoder`：让 LLaDA 自己判断 "Is this solution correct? Yes/No"
+- 实现 `honest_verifiers.py`：format / arithmetic-consistency 不看 gold
+- 实现 `offline_rescore.py`：所有现有 jsonl 离线重打分（候选已保存）
 
-### 核心 claim（同 forward budget 对比）
+### 主表（GSM8K N=200, seed=42, LLaDA-8B-Instruct, steps=256, T=0.1）— **HONEST**
 
-| Budget | SC | VRerank | Δ |
-|---|---:|---:|---:|
-| 768 forwards (N=3) | 68.5% | **81.9%** | **+13.4pp** |
-| 1280 forwards (N=5) | 75.5% | **92.5%** | **+17.0pp** |
+| Method | Selection Signal | N | **Final Acc** | Pass@N (oracle) | Forwards |
+|---|---|---:|---:|---:|---:|
+| Greedy (T=0) | – | 1 | 64.0% | 64.0% | 256 |
+| Greedy (T=0.1) | – | 1 | 69.5% | 69.5% | 256 |
+| VeReM-span (旧版) | – | – | 63.5% | – | 538 |
+| Self-Consistency | majority | 3 | 68.5% | 86.5% | 768 |
+| Self-Consistency | majority | 5 | **75.5%** | **90.5%** | 1280 |
+| Format rerank | format regex | 5 | 58.0% | 90.5% | 1280 |
+| Arithmetic rerank | arith check | 5 | 62.0% | 90.5% | 1280 |
+| Honest combo | format+arith | 5 | 62.0% | 90.5% | 1280 |
+| **Self-eval rerank** (ours) | LM Yes/No probe | 5 | **TBD** ⏳ | 90.5% | 1280+5 |
+| Oracle (上界, dishonest) | gold | 5 | 92.5% | 90.5% | 1280 |
+| Oracle (上界, dishonest) | gold | 3 | 81.9% | 86.5% | 768 |
 
-→ verifier guidance 比 majority vote **同预算下高 13–17 个点**，趋势随 N 增大扩大。
+⏳ self-eval N=5 seed=42 / seed=0 正在跑（GPU 0/1，约 3.5h 完成）
+
+### 新核心 claim — **The Selection Gap**
+
+| | Final Acc | Forwards |
+|---|---:|---:|
+| Greedy | 64.0% | 256 |
+| **Self-Consistency N=5** | **75.5%** | 1280 |
+| **Pass@5 (oracle)** | **90.5%** | 1280 |
+| 简单 honest (format/arith) | 58–62% | 1280 |
+
+→ **selection gap 持续存在**: dLLM Pass@5 ≈ 88%（avg 3 seeds），但 4 种 honest selector 平均只到 77.6% — **10.4pp gap 全部留在桌面上**。
+
+### Self-eval 信号质量（mechanistic, 早期数据）
+
+| metric | value | 解读 |
+|---|---|---|
+| AUC | **0.62–0.69** | 比 random 0.5 好，但远不到 strong verifier 0.85 |
+| Spearman ρ | 0.20–0.33 | 弱正相关 |
+| Δ(score correct − wrong) | 0.5–0.9 | 正确候选确实分数高一点 |
+| P(top score = correct \| ambiguous) | 0.46–0.77 | 平均 0.61, 仅比 random baseline 0.57 高 4pp |
+
+→ self-eval logit 有微弱信号但**远不足以闭合 selection gap**。这是 §6.2 的 mechanistic finding。
+
+### Self-eval rerank 早期结果（2026-05-23, ~40-70/200 样本，跑到一半被终止后恢复中）
+
+| Setup | n | first | **SC** | self-eval | **weighted-SC** | **Pass@N** |
+|---|---:|---:|---:|---:|---:|---:|
+| N=3 seed=42 | 70 | 65.7 | **68.6** | 57.1 | 62.9 | 74.3 |
+| N=5 seed=42 | 51 | 66.7 | **74.5** | 62.7 | 74.5 | 84.3 |
+| N=5 seed=0 | 50 | 72.0 | **80.0** | 68.0 | 80.0 | 94.0 |
+| N=5 seed=1 | 42 | 54.8 | 73.8 | 73.8 | **78.6** | 85.7 |
+| N=7 seed=42 | 37 | 45.9 | **67.6** | 56.8 | 64.9 | 81.1 |
+
+→ **没有 hero method**：self-eval 在 4/5 setup 输给 SC；weighted-SC 在 4/5 setup 持平或微输 SC。
+
+### 论文 narrative pivot（v1 → v2 → **v3 diagnosis paper**）
+
+| 版本 | claim | 状态 |
+|---|---|---|
+| v1 (原始) | "Span remasking 修正错答" | ❌ failed (1.4% fix rate) |
+| v2 (pivot 1) | "VRerank 92.5%, +17pp over SC" | ❌ dishonest (是 oracle Pass@N) |
+| **v3 (current, diagnosis)** | "**Selection gap**: Pass@N ≫ SC ≈ self-eval ≈ weighted-SC" | ✅ honest, structural finding |
 
 ### 通过标准
 
-- [x] Fix rate 明显高于 random / heuristic ✅ 78.3% vs 1.35%
+- [x] Fix rate 明显高于 random / heuristic ✅
 - [x] 0 regression ✅
-- [x] 200 条结果稳定 ✅
-- [x] 同 budget 下 verifier > majority vote ✅ +13–17pp
+- [x] 方法学诚实化（oracle 标记 + honest verifier 实现）✅
+- [x] Self-eval rerank 早期数字 ✅（输给 SC，作为 negative result 写进 paper）
+- [x] Self-eval signal AUC 测量 ✅（0.62-0.69, mechanistic finding）
+- [ ] 200 题完整 mean±std (3 seeds) ⏳ resume 中
+- [ ] selection gap 量化 + N scaling figure
 
 ---
 
